@@ -7,6 +7,12 @@ builds:
     goarch:
       - amd64
     binary: geteduroam-cli
+  - main: ./cmd/geteduroam-gui
+    goos:
+      - linux
+    goarch:
+      - amd64
+    binary: geteduroam-gui
 
 nfpms:
   - file_name_template: '{{ .Binary }}_{{ .Os }}_{{ .Arch }}'
@@ -20,7 +26,7 @@ nfpms:
     version_metadata: git
     release: 1
     description: |-
-      Geteduroam client for linux distributions.
+      Geteduroam CLI client for Linux distributions.
 
     overrides:
      deb:
@@ -29,6 +35,31 @@ nfpms:
      rpm:
       dependencies:
        - NetworkManager
+
+  - file_name_template: '{{ .Binary }}_{{ .Os }}_{{ .Arch }}'
+    package_name: geteduroam-gui
+    maintainer: Jeroen Wijenbergh
+    homepage: https://geteduroam.org/
+    formats:
+       - deb
+       - rpm
+    bindir: /usr/bin
+    version_metadata: git
+    release: 1
+    description: |-
+      Geteduroam GUI client for Linux distributions.
+
+    overrides:
+     deb:
+      dependencies:
+       - network-manager
+       - libgtk-4-1
+       - libadwaita-4-1
+     rpm:
+      dependencies:
+       - NetworkManager
+       - gtk4
+       - libadwaita-1-0
 
 checksum:
   name_template: "checksums.txt"
