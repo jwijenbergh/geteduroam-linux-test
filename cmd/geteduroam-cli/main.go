@@ -20,6 +20,7 @@ import (
 	"github.com/geteduroam/linux-app/internal/instance"
 	"github.com/geteduroam/linux-app/internal/log"
 	"github.com/geteduroam/linux-app/internal/network"
+	"github.com/geteduroam/linux-app/internal/notification"
 	"github.com/geteduroam/linux-app/internal/utils"
 	"github.com/geteduroam/linux-app/internal/version"
 )
@@ -448,7 +449,7 @@ func main() {
 	if !IsTerminal() {
 		msg := "Not starting the CLI as it is not run in a terminal. You might want to install the GUI: https://github.com/geteduroam/linux-app/releases"
 		slog.Error(msg)
-		_ = exec.Command("notify-send", "geteduroam-cli", msg).Start()
+		notification.Send(msg)
 		os.Exit(1)
 	}
 	var v *time.Time
@@ -458,7 +459,25 @@ func main() {
 		v = doDiscovery()
 	}
 	fmt.Println("\nYour eduroam connection has been added to NetworkManager with the name: \"eduroam (from geteduroam)\"")
-	if v != nil {
-		fmt.Printf("Your connection is valid for: %d days\n", utils.ValidityDays(*v))
+	if v == nil {
+		return
+	}
+	fmt.Printf("Your connection is valid for: %d days\n", utils.ValidityDays(*v))
+	if !notification.HasDaemonSupport() {
+		return
+	}
+	in := ask("Do you want to enable notifications that warns for expiry (requires SystemD and notify-send) (y/n)?: ", func(msg string) bool {
+		if msg != "y" && msg != "n" {
+			fmt.Fprintln(os.Stderr, "Please enter y/n")
+			return false
+		}
+		return true
+	})
+	if in != "y" {
+		return
+	}
+	err = notification.EnableDameon()
+	if err != nil {
+		slog.Error("failed to enale notification support", "err", err)
 	}
 }
